@@ -29,4 +29,4 @@ if [ -f $IMAGE ]; then
     rm $IMAGE
 fi
 
-dd if=/dev/zero of=disk.img bs=512 count=2000
+dd if=/dev/zero of=$IMAGE bs=512 count=2000
