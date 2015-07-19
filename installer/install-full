@@ -7,16 +7,6 @@ DEBOOTSTRAP_MIRROR="http://ftp.us.debian.org/debian/"
 IMAGE="/tmp/raspberry-manager.img"
 KERNEL_VERSION="3.16.0-4-586"
 
-DEBOOTSTRAP_PKGS=(
-    apt-utils
-    ca-certificates
-    dbus
-    dialog
-    git
-    sudo
-    wget
-)
-
 # Make sure only root can run our script
 if [[ $EUID -ne 0 ]]; then
     echo "Error: This script must be run as root."
@@ -89,7 +79,7 @@ fi
 #              Set the base system               #
 #------------------------------------------------#
 # Setup the base Debian environment
-debootstrap --arch=$CHROOT_ARCH --variant=minbase --include=$(echo ${DEBOOTSTRAP_PKGS[@]} | tr ' ' ',') $DEBOOTSTRAP_DISTRIB $CHROOT_DIR $DEBOOTSTRAP_MIRROR
+debootstrap --arch=$CHROOT_ARCH --variant=minbase $DEBOOTSTRAP_DISTRIB $CHROOT_DIR $DEBOOTSTRAP_MIRROR
 if [ $? -ne 0 ]; then
     echo "Error: Debootstrap existed with an error"
     umount -lf $CHROOT_DIR
@@ -103,13 +93,69 @@ fi
 mount -o bind /dev $CHROOT_DIR/dev
 cp /etc/resolv.conf $CHROOT_DIR/etc/resolv.conf
 
+# The base system installer script
+if [ ! -d $CHROOT_DIR/tmp/raspbian-manager-installer ]; then
+    mkdir -p $CHROOT_DIR/tmp/raspbian-manager-installer
+fi
 
+wget https://raw.githubusercontent.com/JPG-Consulting/RPiManager/development/installer/chroot-installer -O $CHROOT_DIR/tmp/raspbian-manager-installer/chroot-installer
+if [ $? -ne 0 ]; then
+    echo "Error: Unable to download chroot environment installer."
+    rm $CHROOT_DIR/etc/resolv.conf
+    umount -lf $CHROOT_DIR
+    kpartx -d $IMAGE
+    exit 1
+fi
 
+chown root:root $CHROOT_DIR/tmp/raspbian-manager-installer/chroot-installer
+chmod +x $CHROOT_DIR/tmp/raspbian-manager-installer/chroot-installer
+
+#------------------------------------------------#
+#                     Chroot                     #
+#------------------------------------------------#
+chroot $CHROOT_DIR /bin/bash -x <<'EOF'
+mount none -t proc /proc
+mount none -t sysfs /sys
+mount none -t devpts /dev/pts
+export HOME=/root
+export LC_ALL=C
+apt-get update
+apt-get --yes --force-yes -qq install dialog dbus
+dbus-uuidgen > /var/lib/dbus/machine-id
+/tmp/raspbian-manager-installer/chroot-installer
+exit
+EOF
+
+# Chroot specific settings for full install
+chroot $CHROOT_DIR /bin/bash -x <<'EOF'
+apt-get --yes -qq install grub
+update-grub
+exit
+EOF
+
+chroot $CHROOT_DIR /bin/bash -x <<'EOF'
+rm -f /var/lib/dbus/machine-id
+apt-get clean
+umount -lf /proc
+umount -lf /sys
+umount -lf /dev/pts
+exit
+EOF
+
+#------------------------------------------------#
+#               Chroot clean up                  #
+#------------------------------------------------#
+rm $CHROOT_DIR/etc/resolv.conf
+umount -lf $CHROOT_DIR/dev
+
+#------------------------------------------------#
+#               GRUB Post-config                 #
+#------------------------------------------------#
+grub-install --root-directory=$CHROOT_DIR --recheck
+grub-install $DEVICE --root-directory=$CHROOT_DIR
 
 #------------------------------------------------#
 #                    Clean up                    #
 #------------------------------------------------#
-rm $CHROOT_DIR/etc/resolv.conf
-umount -lf $CHROOT_DIR/dev
 umount -lf $CHROOT_DIR
 kpartx -d $IMAGE
