@@ -13,7 +13,7 @@ fi
 #------------------------------------------------#
 
 apt-get --yes -qq update
-apt-get --yes -qq install debootstrap parted kpartx wget ca-certificates
+apt-get --yes -qq install debootstrap parted kpartx e2fsprogs wget ca-certificates
 # An apt cache makes subsequent image-building much faster
 apt-get --yes -qq install apt-cacher-ng
 apt-get --yes -qq upgrade
@@ -50,3 +50,10 @@ if [ $? -ne 0 ]; then
     kpartx -d $IMAGE
     exit 1
 fi
+
+tune2fs -c 0 -i 0 $LOOPBACK_PARTITION
+
+#------------------------------------------------#
+#                    Clean up                    #
+#------------------------------------------------#
+kpart -d $IMAGE
