@@ -30,3 +30,7 @@ if [ -f $IMAGE ]; then
 fi
 
 dd if=/dev/zero of=$IMAGE bs=512 count=2000000
+
+parted -s $IMAGE mklabel msdos
+parted -s $IMAGE mkpart primary ext4 0% 100%
+parted -s $IMAGE set 1 boot on
