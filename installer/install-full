@@ -6,3 +6,12 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+#------------------------------------------------#
+#                 Pre-requisites                 #
+#------------------------------------------------#
+
+apt-get --yes -qq update
+apt-get --yes -qq install debootstrap parted kpartx wget ca-certificates
+# An apt cache makes subsequent image-building much faster
+apt-get --yes -qq install apt-cacher-ng
+apt-get --yes -qq upgrade
