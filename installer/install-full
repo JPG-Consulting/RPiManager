@@ -1,10 +1,10 @@
 #!/bin/bash
 
-ARCH="i386"
+CHROOT_ARCH="i386"
+CHROOT_DIR="/mnt"
+DEBOOTSTRAP_DISTRIB="jessie"
+DEBOOTSTRAP_MIRROR="http://ftp.us.debian.org/debian/"
 IMAGE="/tmp/raspberry-manager.img"
-MIRROR="http://ftp.us.debian.org/debian/"
-MOUNT="/mnt"
-SUITE="jessie"
 
 # Make sure only root can run our script
 if [[ $EUID -ne 0 ]]; then
@@ -67,7 +67,7 @@ tune2fs -c 0 -i 0 $LOOPBACK_PARTITION
 #                   Mount image                  #
 #------------------------------------------------#
 # Mount the partition
-mount $LOOPBACK_PARTITION $MOUNT
+mount $LOOPBACK_PARTITION $CHROOT_DIR
 if [ $? -ne 0 ]; then
     echo "Error: unable to mount image."
     kpartx -d $IMAGE
@@ -78,16 +78,23 @@ fi
 #              Set the base system               #
 #------------------------------------------------#
 # Setup the base Debian environment
-debootstrap --arch=$ARCH --variant=minbase $SUITE $MOUNT $MIRROR
+debootstrap --arch=$CHROOT_ARCH --variant=minbase $DEBOOTSTRAP_DISTRIB $CHROOT_DIR $DEBOOTSTRAP_MIRROR
 if [ $? -ne 0 ]; then
     echo "Error: Debootstrap existed with an error"
-    umount -f $MOUNT
+    umount -f $CHROOT_DIR
     kpartx -d $IMAGE
     exit 1
 fi
 
 #------------------------------------------------#
+#             Chroot pre-requisites              #
+#------------------------------------------------#
+mount -o bind /dev /mnt/liveusb/dev
+cp /etc/resolv.conf /mnt/liveusb/etc/resolv.conf
+
+
+#------------------------------------------------#
 #                    Clean up                    #
 #------------------------------------------------#
-umount -f $MOUNT
+umount -f $CHROOT_DIR
 kpartx -d $IMAGE
