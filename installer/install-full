@@ -37,7 +37,7 @@ parted -s $IMAGE set 1 boot on
 
 DEVICE=`kpartx -vas $IMAGE | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
 DEVICE="/dev/mapper/${DEVICE}"
-LOOPBACK_PARTITION=${device}p1
+LOOPBACK_PARTITION=${DEVICE}p1
 if [ ! -b $LOOPBACK_PARTITION ]; then
     echo "Error: Can't find root image partition, as $LOOPBACK_PARTITION."
     kpartx -d $IMAGE
