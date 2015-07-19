@@ -128,10 +128,7 @@ dbus-uuidgen > /var/lib/dbus/machine-id
 exit
 EOF
 
-echo ""
-echo "chroot $ROOT_DIR blkid -o value -s UUID $LOOPBACK_PARTITION"
-echo ""
-LOOPBACK_PARTITION_UUID="$(chroot "$ROOT_DIR" blkid -o value -s UUID "$LOOPBACK_PARTITION")"
+LOOPBACK_PARTITION_UUID="$(chroot "$CHROOT_DIR" blkid -o value -s UUID "$LOOPBACK_PARTITION")"
 
 echo "<file system> <mount point>   <type>  <options>   <dump>  <pass>" > $CHROOT_DIR/etc/fstab
 echo "UUID=${LOOPBACK_PARTITION_UUID} /    ext4    errors=remount-ro   0   1" >> $CHROOT_DIR/etc/fstab
