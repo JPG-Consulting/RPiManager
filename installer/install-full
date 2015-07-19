@@ -155,7 +155,7 @@ umount -lf $CHROOT_DIR/dev
 #------------------------------------------------#
 #               GRUB Post-config                 #
 #------------------------------------------------#
-grub-install --root-directory=$CHROOT_DIR --recheck
+#grub-install --root-directory=$CHROOT_DIR --recheck
 grub-install $DEVICE --root-directory=$CHROOT_DIR
 
 #------------------------------------------------#
