@@ -129,6 +129,7 @@ EOF
 # Chroot specific settings for full install
 chroot $CHROOT_DIR /bin/bash -x <<'EOF'
 apt-get --yes -qq install grub udev discover1
+[ -d /boot/grub ] || mkdir -p /boot/grub
 update-grub
 exit
 EOF
