@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IMAGE="/tmp/raspberry-manager.img"
+
 # Make sure only root can run our script
 if [[ $EUID -ne 0 ]]; then
     echo "Error: This script must be run as root."
@@ -15,3 +17,16 @@ apt-get --yes -qq install debootstrap parted kpartx wget ca-certificates
 # An apt cache makes subsequent image-building much faster
 apt-get --yes -qq install apt-cacher-ng
 apt-get --yes -qq upgrade
+
+#------------------------------------------------#
+#                 Image creation                 #
+#------------------------------------------------#
+if [ -z $IMAGE ]; then
+    IMAGE="/tmp/raspberry-manager.img"
+fi
+
+if [ -f $IMAGE ]; then
+    rm $IMAGE
+fi
+
+dd if=/dev/zero of=disk.img bs=512 count=2000
