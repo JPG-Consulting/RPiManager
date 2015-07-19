@@ -34,3 +34,19 @@ dd if=/dev/zero of=$IMAGE bs=512 count=2000000
 parted -s $IMAGE mklabel msdos
 parted -s $IMAGE mkpart primary ext4 0% 100%
 parted -s $IMAGE set 1 boot on
+
+DEVICE=`kpartx -vas $IMAGE | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
+DEVICE="/dev/mapper/${DEVICE}"
+LOOPBACK_PARTITION=${device}p1
+if [ ! -b $LOOPBACK_PARTITION ]; then
+    echo "Error: Can't find root image partition, as $LOOPBACK_PARTITION."
+    kpartx -d $IMAGE
+    exit 1
+fi
+
+mkfs.ext4 $LOOPBACK_PARTITION
+if [ $? -ne 0 ]; then
+    echo "Error: failed to format image file partition."
+    kpartx -d $IMAGE
+    exit 1
+fi
