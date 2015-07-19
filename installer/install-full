@@ -135,6 +135,7 @@ exit
 EOF
 
 chroot $CHROOT_DIR /bin/bash -x <<'EOF'
+touch /root/it-is-me
 rm -f /var/lib/dbus/machine-id
 apt-get clean
 umount -lf /proc
