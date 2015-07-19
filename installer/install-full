@@ -41,19 +41,21 @@ parted -s $IMAGE mkpart primary ext4 0% 100%
 parted -s $IMAGE set 1 boot on
 
 DEVICE=`kpartx -vas $IMAGE | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
-DEVICE="/dev/mapper/${DEVICE}"
 if [ -z $DEVICE ]; then
     echo "Error: Unable to locate the loopback device for the image file."
     kpartx -d $IMAGE
     exit 1
 fi
 
-LOOPBACK_PARTITION=${DEVICE}p1
+LOOPBACK_PARTITION="/dev/mapper/${DEVICE}p1"
+
 if [ ! -b $LOOPBACK_PARTITION ]; then
     echo "Error: Can't find root image partition, as $LOOPBACK_PARTITION."
     kpartx -d $IMAGE
     exit 1
 fi
+
+DEVICE="/dev/${DEVICE}"
 
 mkfs.ext4 $LOOPBACK_PARTITION
 if [ $? -ne 0 ]; then
