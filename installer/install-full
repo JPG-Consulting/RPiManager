@@ -128,6 +128,12 @@ dbus-uuidgen > /var/lib/dbus/machine-id
 exit
 EOF
 
+rootUuid="$(chroot ${ROOT_DIR} blkid -o value -s UUID ${LOOPBACK_PARTITION})"
+
+echo "<file system> <mount point>   <type>  <options>   <dump>  <pass>" > $CHROOT_DIR/etc/fstab
+echo "UUID=${rootUuid} /    ext4    errors=remount-ro   0   1" >> $CHROOT_DIR/etc/fstab
+
+
 # Chroot specific settings for full install
 chroot $CHROOT_DIR /bin/bash -x <<'EOF'
 apt-get --yes -qq install grub udev
