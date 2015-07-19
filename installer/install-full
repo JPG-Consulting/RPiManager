@@ -1,6 +1,10 @@
 #!/bin/bash
 
+ARCH="i386"
 IMAGE="/tmp/raspberry-manager.img"
+MIRROR="http://ftp.us.debian.org/debian/"
+MOUNT="/mnt"
+SUITE="jessie"
 
 # Make sure only root can run our script
 if [[ $EUID -ne 0 ]]; then
@@ -37,7 +41,12 @@ parted -s $IMAGE set 1 boot on
 
 DEVICE=`kpartx -vas $IMAGE | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
 DEVICE="/dev/mapper/${DEVICE}"
-echo "DEVICE IS $DEVICE"
+if [ -z $DEVICE ]; then
+    echo "Error: Unable to locate the loopback device for the image file."
+    kpartx -d $IMAGE
+    exit 1
+fi
+
 LOOPBACK_PARTITION=${DEVICE}p1
 if [ ! -b $LOOPBACK_PARTITION ]; then
     echo "Error: Can't find root image partition, as $LOOPBACK_PARTITION."
@@ -58,7 +67,7 @@ tune2fs -c 0 -i 0 $LOOPBACK_PARTITION
 #                   Mount image                  #
 #------------------------------------------------#
 # Mount the partition
-mount $LOOPBACK_PARTITION /mnt
+mount $LOOPBACK_PARTITION $MOUNT
 if [ $? -ne 0 ]; then
     echo "Error: unable to mount image."
     kpartx -d $IMAGE
@@ -66,7 +75,19 @@ if [ $? -ne 0 ]; then
 fi
 
 #------------------------------------------------#
+#              Set the base system               #
+#------------------------------------------------#
+# Setup the base Debian environment
+debootstrap --arch=$ARCH --variant=minbase $SUITE $MOUNT $MIRROR
+if [ $? -ne 0 ]; then
+    echo "Error: Debootstrap existed with an error"
+    umount -f $MOUNT
+    kpartx -d $IMAGE
+    exit 1
+fi
+
+#------------------------------------------------#
 #                    Clean up                    #
 #------------------------------------------------#
-umount -f /mnt
-kpart -d $IMAGE
+umount -f $MOUNT
+kpartx -d $IMAGE
