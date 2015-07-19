@@ -54,6 +54,18 @@ fi
 tune2fs -c 0 -i 0 $LOOPBACK_PARTITION
 
 #------------------------------------------------#
+#                   Mount image                  #
+#------------------------------------------------#
+# Mount the partition
+mount $LOOPBACK_PARTITION /mnt
+if [ $? -ne 0 ]; then
+    echo "Error: unable to mount image."
+    kpartx -d $IMAGE
+    exit 1
+fi
+
+#------------------------------------------------#
 #                    Clean up                    #
 #------------------------------------------------#
+umount -f /mnt
 kpart -d $IMAGE
