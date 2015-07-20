@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# http://ragnermagalhaes.blogspot.com.es/2007/05/installing-really-debian-linux-in-usb.html
 CHROOT_ARCH="i386"
 CHROOT_DIR="/mnt"
 DEBOOTSTRAP_DISTRIB="jessie"
