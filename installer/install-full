@@ -37,7 +37,7 @@ fi
 dd if=/dev/zero of=$IMAGE bs=512 count=2000000
 
 parted -s $IMAGE mklabel msdos
-parted -s $IMAGE mkpart primary ext4 0% 100%
+parted -s $IMAGE mkpart primary ext3 0% 100%
 parted -s $IMAGE set 1 boot on
 
 DEVICE=`kpartx -vas $IMAGE | sed -E 's/.*(loop[0-9])p.*/\1/g' | head -1`
@@ -57,7 +57,7 @@ fi
 
 DEVICE="/dev/${DEVICE}"
 
-mkfs.ext4 $LOOPBACK_PARTITION
+mkfs.ext3 $LOOPBACK_PARTITION
 if [ $? -ne 0 ]; then
     echo "Error: failed to format image file partition."
     kpartx -d $IMAGE
